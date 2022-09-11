@@ -8,7 +8,15 @@ from .models import User, Category, Listing
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    activeListings = Listing.objects.filter(isActive=True)
+    allCategories = Category.objects.all()
+    return render(request, "auctions/index.html", {
+        "listings": activeListings,
+        "categories": allCategories,
+    })
+    
+def displayCategory(request):
+    pass
 
 def createListing(request):
     if request.method == "GET":
@@ -16,6 +24,35 @@ def createListing(request):
         return render(request, "auctions/create.html", {
             "categories": allCategories
         })
+    else: 
+        # Get the date from the form
+        title = request.POST["title"]
+        description = request.POST["description"]
+        imageurl = request.POST["imageurl"]
+        price = request.POST["price"]
+        category = request.POST["category"]
+        
+        # Who is the user?
+        currentUser = request.user
+        
+        #Get all content about the particular category
+        categoryData = Category.objects.get(categoryName=category)
+        # Create a new Listing object
+        newListing = Listing(
+            title=title,
+            description=description,
+            imageURL=imageurl,
+            price=float(price),
+            category=categoryData,
+            owner=currentUser
+        )
+        
+        #Insert the object in our database
+        newListing.save()
+        
+        #Redirect to index page
+        return HttpResponseRedirect(reverse(index))
+        
 
 
 def login_view(request):
