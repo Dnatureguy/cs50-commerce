@@ -1,3 +1,4 @@
+from pickle import FALSE
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -6,6 +7,25 @@ from django.urls import reverse
 
 from .models import User, Category, Listing
 
+def listing(request, id):
+    listingData = Listing.objects.get(pk=id)
+    isListingInWatchlist = request.user in listingData.watchlist.all()
+    return render(request, "auctions/listing.html", {
+        "listing": listingData,
+        "isListingInWatchlist": isListingInWatchlist
+    })
+    
+def removeWatchlist(request, id):
+    listingData = Listing.objects.get(pk=id)
+    currentUser = request.user
+    listingData.watchlist.remove(currentUser)
+    return HttpResponseRedirect(reverse("listing", args=(id, ))) 
+
+def addWatchlist(request, id):
+    listingData = Listing.objects.get(pk=id)
+    currentUser = request.user
+    listingData.watchlist.add(currentUser)
+    return HttpResponseRedirect(reverse("listing", args=(id, )))
 
 def index(request):
     activeListings = Listing.objects.filter(isActive=True)
@@ -16,7 +36,15 @@ def index(request):
     })
     
 def displayCategory(request):
-    pass
+    if request.method == "POST":
+        categoryFromForm = request.POST['category']
+        category = Category.objects.get(categoryName=categoryFromForm)
+        activeListings = Listing.objects.filter(isActive=True, category=category)
+        allCategories = Category.objects.all()
+        return render(request, "auctions/index.html", {
+            "listings": activeListings,
+            "categories": allCategories,
+        })
 
 def createListing(request):
     if request.method == "GET":
