@@ -24,6 +24,32 @@ def watchlist(request):
         "listings": listings
     })
     
+def addBid(request, id):
+    newBid = request.POST['newBid']
+    listingData = Listing.objects.get(pk=id)
+    isListingInWatchlist = request.user in listingData.watchlist.all()
+    allComments = Comment.objects.filter(listing=listingData)
+    if int(newBid) > listingData.price.bid:
+        updateBid = Bid(user=request.user, bid=int(newBid))
+        updateBid.save()
+        listingData.price = updateBid
+        listingData.save()
+        return render(request, "auctions/listing.html", {
+            "listing": listingData,
+            "message": "Bid was updated sucessfully",
+            "update": True,
+            "isListingInWatchlist": isListingInWatchlist,
+            "allComments": allComments
+        })
+    else: 
+         return render(request, "auctions/listing.html", {
+            "listing": listingData,
+            "message": "Bid's update failed",
+            "update": False,
+            "isListingInWatchlist": isListingInWatchlist,
+            "allComments": allComments
+        })
+     
 def addComment(request, id):
     currentUser = request.user
     listingData = Listing.objects.get(pk=id)
@@ -50,6 +76,7 @@ def addWatchlist(request, id):
     currentUser = request.user
     listingData.watchlist.add(currentUser)
     return HttpResponseRedirect(reverse("listing", args=(id, )))
+
 
 def index(request):
     activeListings = Listing.objects.filter(isActive=True)
@@ -91,7 +118,7 @@ def createListing(request):
         categoryData = Category.objects.get(categoryName=category)
         
         #Create a bid object
-        bid = Bid(bid=float(price), user=currentUser)
+        bid = Bid(bid=int(price), user=currentUser)
         bid.save()
         
         # Create a new Listing object

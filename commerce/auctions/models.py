@@ -4,19 +4,17 @@ from django.db import models
 
 class User(AbstractUser):
     pass
-
-
+    
 class Category(models.Model):
     categoryName = models.CharField(max_length=50)
     
     def __str__(self):
         return self.categoryName
+    
 class Bid(models.Model):
-    bid = models.FloatField(default=0)    
+    bid = models.IntegerField(default=0)    
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name="userBid")
     
-    def __str__(self):
-        return self.bid
     
 class Listing(models.Model):
     title = models.CharField(max_length=30)
@@ -38,4 +36,9 @@ class Comment(models.Model):
     
     def __str__(self):
         return f"{self.author} comments on {self.listing}"
+
+
+    
+    
+    
     
