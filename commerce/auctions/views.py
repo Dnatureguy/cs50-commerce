@@ -11,10 +11,28 @@ def listing(request, id):
     listingData = Listing.objects.get(pk=id)
     isListingInWatchlist = request.user in listingData.watchlist.all()
     allComments = Comment.objects.filter(listing=listingData)
+    isOwner = request.user.username == listingData.owner.username
     return render(request, "auctions/listing.html", {
         "listing": listingData,
         "isListingInWatchlist": isListingInWatchlist,
-        "allComments": allComments
+        "allComments": allComments,
+        "isOwner": isOwner
+    })
+    
+def closeAuction(request, id):
+    listingData = Listing.objects.get(pk=id)
+    listingData.isActive = False
+    listingData.save()
+    isListingInWatchlist = request.user in listingData.watchlist.all()
+    allComments = Comment.objects.filter(listing=listingData)
+    isOwner = request.user.username == listingData.owner.username
+    return render(request, "auctions/listing.html", {
+        "listing": listingData,
+        "isListingInWatchlist": isListingInWatchlist,
+        "allComments": allComments,
+        "isOwner": isOwner,
+        "update": True,
+        "message": "Congratulations!  Your auction is closed."
     })
 
 def watchlist(request):
@@ -29,6 +47,7 @@ def addBid(request, id):
     listingData = Listing.objects.get(pk=id)
     isListingInWatchlist = request.user in listingData.watchlist.all()
     allComments = Comment.objects.filter(listing=listingData)
+    isOwner = request.user.username == listingData.owner.username
     if int(newBid) > listingData.price.bid:
         updateBid = Bid(user=request.user, bid=int(newBid))
         updateBid.save()
@@ -39,7 +58,8 @@ def addBid(request, id):
             "message": "Bid was updated sucessfully",
             "update": True,
             "isListingInWatchlist": isListingInWatchlist,
-            "allComments": allComments
+            "allComments": allComments,
+            "isOwner": isOwner,
         })
     else: 
          return render(request, "auctions/listing.html", {
@@ -47,7 +67,8 @@ def addBid(request, id):
             "message": "Bid's update failed",
             "update": False,
             "isListingInWatchlist": isListingInWatchlist,
-            "allComments": allComments
+            "allComments": allComments,
+            "isOwner": isOwner,
         })
      
 def addComment(request, id):
